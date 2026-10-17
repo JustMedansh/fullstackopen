@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import personService from './persons'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
@@ -8,11 +8,11 @@ const App = () => {
   const [newFilter, setFilter] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
-      })
+    personService
+    .getAll()
+    .then(response => {
+      setPersons(response)
+    })
   }, [])
 
   const handleNameChange = (event) => {
@@ -37,11 +37,10 @@ const App = () => {
     event.preventDefault()
     const newContact = {
       name: newName,
-      id: String(persons.length + 1),
       number: newNumber,
     }
 
-    const isPresent = doesExist(newName)
+    const isPresent = doesExist(newName)              
     console.log(isPresent)
 
     if (isPresent) {
@@ -50,8 +49,14 @@ const App = () => {
     }
 
     console.log('setting', newContact)
-    setPersons(persons.concat(newContact))
-    setNewName('')
+
+    personService
+    .create(newContact)
+    .then(response => {
+      setPersons(persons.concat(response))
+      setNewName('')
+    })
+    
   }
 
   const doesExist = (personName) => {
