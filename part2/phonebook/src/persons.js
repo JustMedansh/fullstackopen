@@ -20,4 +20,11 @@ const update = (id, newObject) => {
     return getData(request)
 }
 
-export default {getAll, create, update}
+const deleteUser = (id) => {
+    const request = axios.delete(`${baseUrl}/${id}`).catch(error => {
+        console.log('fail')
+    })
+    return getData(request)
+}
+
+export default {getAll, create, update, deleteUser}

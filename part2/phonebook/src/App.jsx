@@ -44,8 +44,18 @@ const App = () => {
     console.log(isPresent)
 
     if (isPresent) {
-      alert(`${newContact.name} is already added to the phonebook.`)
-      return
+      if (window.confirm(`${newContact.name} is already added to the phonebook, replace old number with new one?`)) {
+        personService
+        .update(isPresent.id, newContact)
+        .then(response => {
+          const newPersons = persons.map(person => person.id == response.id ? response : person)
+          setPersons(newPersons) 
+          setNewName('')
+          setNewNumber('')
+        })
+
+        return
+      }
     }
 
     console.log('setting', newContact)
@@ -55,13 +65,22 @@ const App = () => {
     .then(response => {
       setPersons(persons.concat(response))
       setNewName('')
+      setNewNumber('')
     })
     
   }
 
   const doesExist = (personName) => {
-    const isPresent = persons.some(person => personName === person.name)
+    const isPresent = persons.find(person => personName === person.name)
     return isPresent
+  }
+
+  const handleDelete = (id) => {
+    if (window.confirm("Delete user?")) {
+      personService.deleteUser(id)
+      const newPersons = persons.filter(person => person.id != id)
+      setPersons(newPersons)
+    }
   }
 
   const showAll = !newFilter
@@ -80,7 +99,7 @@ const App = () => {
       />
 
       <h2>Numbers</h2>
-      <Persons contacts={contactsToShow} />
+      <Persons contacts={contactsToShow} onDelete={handleDelete}/>
     </div>
 
   )
@@ -96,15 +115,16 @@ const Filter = ({ onChange, newFilter }) => {
   )
 }
 
-const Persons = ({ contacts }) => {
+const Persons = ({ contacts, onDelete}) => {
   return (<div>
-    {contacts.map(person => <Contact contactObject={person} key={person.id}/>)}
+    {contacts.map(person => <Contact contactObject={person} key={person.id} onDelete={onDelete}/>)}
   </div>)
 }
 
-const Contact = ({ contactObject }) => {
+const Contact = ({ contactObject, onDelete }) => {
   return (<p>
     {contactObject.name} {contactObject.number}
+    <button onClick={() => {onDelete(contactObject.id)}}>delete</button>
   </p>)
 }
 
