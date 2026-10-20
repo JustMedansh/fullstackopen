@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react'
 import personService from './persons'
+import Persons from './components/Persons'
+import PersonForm from './components/PersonForm'
+import Filter from './components/Filter'
+import CustomNotification from './components/Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newFilter, setFilter] = useState('')
+  const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     personService
@@ -13,24 +18,36 @@ const App = () => {
     .then(response => {
       setPersons(response)
     })
+    .catch(response => {
+      notify("failed to get contacts", 'error')
+    })
   }, [])
 
-  const handleNameChange = (event) => {
-    const newValue = event.target.value
-    console.log(newValue)
-    setNewName(newValue)
+  useEffect(() => {
+    if (notification == null) {
+      return
+    }
+
+    const timeoutId = setTimeout(() => {setNotification(null)}, 5000)
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+
+  }, [notification])
+
+  const notify = (message, type) => {
+    setNotification({message, type})
   }
 
-  const handleNumberChange = (event) => {
+  const handleEvent = (event, setter) => {
     const newValue = event.target.value
-    console.log(newValue)
-    setNewNumber(newValue)
+    setter(newValue)
   }
 
-  const handleFilterChange = (event) => {
-    const newValue = event.target.value
-    console.log(newValue)
-    setFilter(newValue)
+  const clearForm = () => {
+    setNewName('')
+    setNewNumber('')
   }
 
   const handleSave = (event) => {
@@ -50,8 +67,11 @@ const App = () => {
         .then(response => {
           const newPersons = persons.map(person => person.id == response.id ? response : person)
           setPersons(newPersons) 
-          setNewName('')
-          setNewNumber('')
+          notify(`changed phone number of ${response.name}`, 'success')
+          clearForm()
+        })
+        .catch(() => {
+          notify('failed to update phone number', 'error')
         })
 
         return
@@ -64,9 +84,12 @@ const App = () => {
     .create(newContact)
     .then(response => {
       setPersons(persons.concat(response))
-      setNewName('')
-      setNewNumber('')
+      clearForm()
+      notify(`added ${response.name}`, 'success')
     })
+    .catch(
+      notify(`failed to add ${response.name}`, 'error')
+    )
     
   }
 
@@ -78,6 +101,12 @@ const App = () => {
   const handleDelete = (id) => {
     if (window.confirm("Delete user?")) {
       personService.deleteUser(id)
+      .then(response => {
+        notify(`deleted ${response.name}`, 'success')
+      })
+      .catch(response => {
+        notify('failed to delete', 'error')
+      })
       const newPersons = persons.filter(person => person.id != id)
       setPersons(newPersons)
     }
@@ -89,57 +118,20 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <Filter onChange={handleFilterChange} newFilter={newFilter} />
+      <CustomNotification message={notification?.message ?? null} type={notification?.type ?? null} />
+      <Filter onChange={event => handleEvent(event, setFilter)} newFilter={newFilter} />
       <PersonForm
         onSubmit={handleSave}
+        onNameChange={event => handleEvent(event, setNewName)}
+        onNumberChange={event => handleEvent(event, setNewNumber)}
         newName={newName}
-        onNameChange={handleNameChange}
         newNumber={newNumber}
-        onNumberChange={handleNumberChange}
       />
 
       <h2>Numbers</h2>
       <Persons contacts={contactsToShow} onDelete={handleDelete}/>
     </div>
-
   )
-}
-
-const Filter = ({ onChange, newFilter }) => {
-  return (
-    <form>
-      <div>
-        filter shown with: <input onChange={onChange} value={newFilter}/>
-      </div>
-    </form>
-  )
-}
-
-const Persons = ({ contacts, onDelete}) => {
-  return (<div>
-    {contacts.map(person => <Contact contactObject={person} key={person.id} onDelete={onDelete}/>)}
-  </div>)
-}
-
-const Contact = ({ contactObject, onDelete }) => {
-  return (<p>
-    {contactObject.name} {contactObject.number}
-    <button onClick={() => {onDelete(contactObject.id)}}>delete</button>
-  </p>)
-}
-
-const PersonForm = (props) => {
-  return (<form onSubmit={props.onSubmit}>
-    <div>
-      name: <input onChange={props.onNameChange} value={props.newName}/>
-    </div>
-    <div>
-      number: <input onChange={props.onNumberChange} value={props.newNumber}/>
-    </div>
-    <div>
-      <button type="submit">add</button>
-    </div>
-  </form>)
 }
 
 export default App

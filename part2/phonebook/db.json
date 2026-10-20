@@ -1,19 +1,14 @@
 {
   "persons": [
     {
-      "name": "art",
-      "number": "12",
-      "id": "nhJbw-uer0s"
+      "name": "sasa",
+      "number": "asaas",
+      "id": "7S0eF-EgOn0"
     },
     {
-      "name": "a",
-      "number": "3",
-      "id": "sQuz4xiYhIE"
-    },
-    {
-      "name": "a",
-      "number": "3",
-      "id": "5pJ4QD7XGBA"
+      "name": "asas",
+      "number": "asas",
+      "id": "lqvUI0yNFJQ"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
